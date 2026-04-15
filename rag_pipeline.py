@@ -9,117 +9,118 @@ import os
 
 load_dotenv()
 
-# 🔥 embedding (phải giống lúc build)
-embedding = HuggingFaceEmbeddings(
-    model_name="bkai-foundation-models/vietnamese-bi-encoder"
+# =========================
+# 🔥 HF API KEY ROTATION
+# =========================
+HF_KEYS = [
+    os.getenv("HF_KEY_1"),
+    os.getenv("HF_KEY_2"),
+    os.getenv("HF_KEY_3"),
+]
+
+current_key_index = 0
+
+def get_next_hf_key():
+    global current_key_index
+    key = HF_KEYS[current_key_index]
+    current_key_index = (current_key_index + 1) % len(HF_KEYS)
+    return key
+
+
+def safe_embedding():
+    for _ in range(len(HF_KEYS)):
+        try:
+            return HuggingFaceEmbeddings(
+                model_name="bkai-foundation-models/vietnamese-bi-encoder",
+                huggingfacehub_api_token=get_next_hf_key()
+            )
+        except Exception:
+            continue
+    raise Exception("All HuggingFace API keys failed")
+
+
+# 🔥 embedding (giống lúc build)
+embedding = safe_embedding()
+
+# =========================
+# 🔥 LOAD VECTOR DB
+# =========================
+vectorstore = FAISS.load_local(
+    "vectorstore",
+    embedding,
+    allow_dangerous_deserialization=True
 )
 
-# 🔥 load vector DB
-vectorstore = FAISS.load_local("vectorstore", embedding, allow_dangerous_deserialization=True)
+retriever = vectorstore.as_retriever(
+    search_kwargs={"k": 7}  # tăng độ recall
+)
 
-retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
-
-#  prompt
+# =========================
+# 🔥 PROMPT (tối ưu nhẹ)
+# =========================
 prompt_template = """
 Bạn là AI chuyên về LUẬT GIAO THÔNG ĐƯỜNG BỘ VIỆT NAM.
 
 Nhiệm vụ:
 - Chỉ sử dụng thông tin trong CONTEXT.
 - KHÔNG được tự thêm kiến thức bên ngoài.
-- Nếu không có thông tin, trả lời: "Không có thông tin trong tài liệu."
+- Nếu không có thông tin, trả lời: "Câu hỏi của bạn tôi không thể trả lời vì không có thông tin trong tài liệu."
 - Trả lời bằng tiếng Việt.
 - Nếu có nguồn, trích dẫn dạng (source: trang).
 
 ----------------------------------------
 
- QUY TẮC HIỂU CÂU HỎI (RẤT QUAN TRỌNG):
+QUY TẮC HIỂU CÂU HỎI (RẤT QUAN TRỌNG):
 
 - Phải hiểu câu hỏi theo NGỮ NGHĨA, không chỉ khớp từ khóa.
-- Cho phép nhận diện các cách diễn đạt tương đương, ví dụ:
+- Cho phép nhận diện các cách diễn đạt tương đương:
   + "bằng lái xe" = "giấy phép lái xe"
   + "nồng độ cồn" = "uống rượu bia"
   + "chuyển làn sai" = "chuyển làn không đúng quy định"
 
-- Câu hỏi có thể chứa:
-  + Hành vi chính (liên quan trực tiếp đến luật)
-  + Ngữ cảnh phụ (không ảnh hưởng đến mức phạt)
-
 ----------------------------------------
 
- QUY TẮC XÁC ĐỊNH HÀNH VI CHÍNH:
+QUY TẮC XÁC ĐỊNH HÀNH VI CHÍNH:
 
 - Luôn xác định HÀNH VI CHÍNH trước khi tìm CONTEXT.
 
-Ví dụ:
-- "uống rượu bia khi chở con" → hành vi chính: "nồng độ cồn"
-- "vượt đèn đỏ lúc trời mưa" → hành vi chính: "vượt đèn đỏ"
-- "không đội mũ bảo hiểm khi chở trẻ em" → hành vi chính: "không đội mũ bảo hiểm"
-
-Quy tắc xử lý:
 - Nếu ngữ cảnh phụ KHÔNG làm thay đổi mức phạt → BỎ QUA
 - Trả lời dựa trên hành vi chính
-- Chỉ xét ngữ cảnh phụ nếu CONTEXT có quy định riêng liên quan
 
 ----------------------------------------
 
- QUY TẮC TÌM THÔNG TIN:
+QUY TẮC TÌM THÔNG TIN:
 
 - Không cần khớp chính xác từng từ
-- Hãy tìm đoạn trong CONTEXT có ý nghĩa GẦN NHẤT với HÀNH VI CHÍNH
-- Không bắt buộc phải khớp toàn bộ câu hỏi
-
-Ưu tiên:
-  + cùng hành vi
-  + cùng chủ đề
-  + cùng đối tượng (người lái xe, phương tiện...)
+- Tìm đoạn có ý nghĩa GẦN NHẤT với hành vi chính
 
 ----------------------------------------
 
- 1. Nếu câu hỏi liên quan đến XỬ PHẠT / VI PHẠM:
+1. Nếu câu hỏi liên quan đến XỬ PHẠT:
 
-- Trả lời theo dạng:
+Mức phạt chính
 
-Mức phạt chính (tiêu đề)
+"Mức phạt từ X đến Y đồng áp dụng cho các hành vi:"
+- ...
 
-"Mức phạt từ X đến Y đồng áp dụng cho các hành vi sau:"
-- Hành vi 1
-- Hành vi 2
-- Hành vi 3
-
-- Nếu có nhiều mức phạt → chia thành nhiều nhóm
-- Nếu có hình phạt bổ sung (tước GPLX, trừ điểm, v.v.) → phải nêu rõ
-- Ưu tiên gom nhóm theo mức tiền
+- Nếu có nhiều mức → chia nhóm rõ ràng
+- Nếu có hình phạt bổ sung → phải nêu rõ
 
 ----------------------------------------
 
- 2. Nếu câu hỏi là KHÁI NIỆM / GIẢI THÍCH:
+2. Nếu câu hỏi là KHÁI NIỆM:
 
-- Trả lời chi tiết, có cấu trúc rõ ràng
-- Có thể chia:
-  + Định nghĩa
-  + Phân loại
-  + Giải thích
-
-Ví dụ:
-"Bằng lái xe (giấy phép lái xe) gồm các hạng sau:"
-- Hạng A1: ...
-- Hạng B1: ...
-- Hạng B2: ...
+- Trả lời có cấu trúc rõ ràng
 
 ----------------------------------------
 
- LƯU Ý QUAN TRỌNG:
+LƯU Ý QUAN TRỌNG:
 
-- Nếu tìm thấy thông tin GẦN ĐÚNG với HÀNH VI CHÍNH → vẫn trả lời
-- Không yêu cầu CONTEXT phải chứa đầy đủ mọi chi tiết trong câu hỏi
-- KHÔNG loại bỏ câu trả lời chỉ vì thiếu ngữ cảnh phụ
-
-- Nếu KHÔNG tìm thấy thông tin LIÊN QUAN đến hành vi chính → trả:
+- Khi có nhiều đoạn liên quan → tổng hợp đầy đủ
+- Ưu tiên đầy đủ hơn ngắn gọn
+- Không trả lời cụt
+- Nếu không có thông tin → trả:
   "Không có thông tin trong tài liệu."
-
-- Không suy đoán
-- Không trả lời chung chung
-- Giữ nguyên thuật ngữ pháp lý
 
 ----------------------------------------
 
@@ -131,36 +132,44 @@ QUESTION:
 
 ANSWER:
 """
+
 prompt = ChatPromptTemplate.from_template(prompt_template)
 
-# 🔥 LLM (đổi model nhanh hơn)
+# =========================
+# 🔥 LLM
+# =========================
 llm = ChatGoogleGenerativeAI(
     model="gemini-2.5-flash",
     temperature=0.1
 )
 
-import os
-
+# =========================
+# 🔥 FORMAT DOCS (cải thiện)
+# =========================
 def format_docs(docs):
     formatted = []
-    
-    for doc in docs:
+
+    for i, doc in enumerate(docs, 1):
         source = doc.metadata.get("source", "")
         page = doc.metadata.get("page", "")
 
-        
         filename = os.path.basename(source)
 
-        
         if page != "":
             source_text = f"{filename}:{page}"
         else:
             source_text = filename
 
-        formatted.append(f"{doc.page_content}\n(source: {source_text})")
+        formatted.append(
+            f"[Tài liệu {i}]\n{doc.page_content}\n(Nguồn: {source_text})"
+        )
 
     return "\n\n".join(formatted)
 
+
+# =========================
+# 🔥 RAG CHAIN
+# =========================
 rag_chain = (
     {
         "context": retriever | format_docs,
@@ -171,5 +180,8 @@ rag_chain = (
     | StrOutputParser()
 )
 
+# =========================
+# 🔥 ASK FUNCTION
+# =========================
 def ask(q):
     return rag_chain.invoke(q)
