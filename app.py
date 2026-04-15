@@ -8,7 +8,8 @@ def chat(message, history):
 examples = [
     "Uống rượu bia rồi lái xe phạt bao nhiêu?",
     "Chuyển làn đường không đúng bị gì?",
-    "Giấy phép lái xe gồm hạng nào?"
+    "Giấy phép lái xe gồm hạng nào?",
+    "tuổi người lái xe được quy định thế nào?"
 ]
 
 demo = gr.ChatInterface(
