@@ -36,43 +36,32 @@ Câu hỏi:
 
 QUY TẮC BẮT BUỘC:
 
-1. CHỈ sử dụng thông tin có trong "Ngữ cảnh pháp lý".
-Không được tự ý thêm kiến thức bên ngoài hoặc suy đoán.
+1. Chỉ sử dụng thông tin trong "Ngữ cảnh pháp lý" để xác định hành vi vi phạm và mức phạt.
 
-2. Người dùng thường sử dụng ngôn ngữ đời thường. 
-Nếu câu hỏi không trùng khớp với câu chữ trong văn bản pháp luật, 
-hãy tìm **hành vi pháp lý có ý nghĩa tương đương** trong ngữ cảnh.
+2. Người dùng thường sử dụng ngôn ngữ đời thường.
+Bạn phải tìm **hành vi pháp lý có ý nghĩa tương đương trong ngữ cảnh**, 
+không yêu cầu câu chữ phải trùng hoàn toàn.
 
 Ví dụ:
-- "không đội nón" ≈ "không đội mũ bảo hiểm cho người đi mô tô, xe máy"
+- "không đội nón" ≈ "không đội mũ bảo hiểm"
 - "vượt đèn đỏ" ≈ "không chấp hành hiệu lệnh của đèn tín hiệu giao thông"
 - "đi ngược chiều" ≈ "đi ngược chiều của đường một chiều"
 
-3. Trước khi kết luận "không có trong ngữ cảnh", 
-bạn PHẢI kiểm tra toàn bộ ngữ cảnh để tìm hành vi có ý nghĩa tương đương.
+3. Trước khi tìm trong ngữ cảnh, hãy xác định **hành vi giao thông chính** trong câu hỏi.
 
-4. Cấu trúc văn bản pháp luật:
+- Bỏ qua các thông tin không liên quan như:
+  "đi ăn", "đi ngắn", "đi mua đồ", "đi với gia đình", v.v.
 
-- Mức phạt thường được quy định ở **Khoản**
-- Các **Điểm (a, b, c, …)** chỉ liệt kê **hành vi vi phạm**
-- Nếu hành vi nằm trong một Điểm thì **mức phạt áp dụng là mức phạt của Khoản chứa Điểm đó**
+- Chỉ giữ lại **hành vi giao thông cốt lõi**.
 
-5. Khi trả lời về vi phạm:
+4. Sau khi xác định hành vi chính, hãy quét toàn bộ ngữ cảnh để tìm hành vi tương tự.
 
-Bước 1: Xác định hành vi trong câu hỏi  
-Bước 2: Tìm hành vi tương ứng trong ngữ cảnh  
-Bước 3: Xác định **Điều – Khoản – Điểm**  
-Bước 4: Lấy **mức phạt ở phần đầu Khoản chứa hành vi đó**
+5. Cấu trúc luật:
+- Mức phạt nằm ở **Khoản**
+- Các **Điểm (a, b, c)** liệt kê hành vi
+- Nếu hành vi nằm trong một Điểm → mức phạt là **mức phạt của Khoản đó**
 
-6. Nếu hành vi **không được quy định là vi phạm trong ngữ cảnh**, hãy trả lời:
-
-"Hành vi này không được quy định là vi phạm trong ngữ cảnh pháp lý được cung cấp."
-
-7. Nếu **không tìm thấy thông tin liên quan trong ngữ cảnh**, hãy trả lời:
-
-"Mình xin lỗi, thông tin này không nằm trong cơ sở dữ liệu của mình."
-
-8. Cách trình bày câu trả lời:
+6. Khi trả lời:
 
 Hành vi:
 ...
@@ -85,9 +74,17 @@ Khoản ...
 Mức phạt:
 ...
 
+7. Nếu sau khi kiểm tra toàn bộ ngữ cảnh vẫn không tìm thấy hành vi tương ứng:
+
+"Hành vi này không được quy định là vi phạm trong ngữ cảnh pháp lý được cung cấp."
+
+8. Chỉ trả lời:
+"Mình xin lỗi, thông tin này không nằm trong cơ sở dữ liệu của mình."
+khi ngữ cảnh hoàn toàn không liên quan đến câu hỏi.
+
 Yêu cầu:
-- Trình bày rõ ràng
 - Ngắn gọn
+- Rõ ràng
 - Có căn cứ pháp lý
 
 Trả lời:
