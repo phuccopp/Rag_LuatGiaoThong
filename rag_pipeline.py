@@ -135,7 +135,7 @@ prompt = ChatPromptTemplate.from_template(prompt_template)
 
 # 🔥 LLM (đổi model nhanh hơn)
 llm = ChatGoogleGenerativeAI(
-    model="gemini-3.1-flash-lite-preview",
+    model="gemini-2.5-flash",
     temperature=0.1
 )
 
