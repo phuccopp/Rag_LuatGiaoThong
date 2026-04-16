@@ -49,6 +49,9 @@ Yêu cầu trả lời:
 5. Nếu câu hỏi liên quan đến mức phạt, hãy nêu cụ thể:
    - Hành vi vi phạm
    - Mức phạt tương ứng
+6.Nếu có hành vi nhưng không thấy mức phạt rõ ràng, hãy:
+	•	nói hành vi thuộc vi phạm
+	•	và ghi: “mức phạt không tìm thấy rõ trong dữ liệu”
 Trả lời"
 """
 
