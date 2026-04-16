@@ -9,12 +9,10 @@ import os
 
 load_dotenv()
 
-# 🔥 embedding (phải giống lúc build)
 embedding = HuggingFaceEmbeddings(
     model_name="bkai-foundation-models/vietnamese-bi-encoder"
 )
 
-# 🔥 load vector DB
 vectorstore = FAISS.load_local(
     "vectorstore",
     embedding,
@@ -51,7 +49,6 @@ Trả lời:
 
 prompt = ChatPromptTemplate.from_template(prompt_template)
 
-# 🔥 LLM
 llm = ChatGoogleGenerativeAI(
     model="gemini-2.5-flash-lite",
     temperature=0.1
