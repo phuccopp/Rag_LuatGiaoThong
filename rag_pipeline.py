@@ -26,7 +26,7 @@ retriever = vectorstore.as_retriever(search_kwargs={"k": 6})
 prompt_template = """
 Bạn là một trợ lý AI chuyên nghiệp về LUẬT GIAO THÔNG ĐƯỜNG BỘ VIỆT NAM.
 
-Nhiệm vụ của bạn là sử dụng NGỮ CẢNH PHÁP LÝ để trả lời chính xác.
+Nhiệm vụ của bạn là sử dụng NGỮ CẢNH PHÁP LÝ được cung cấp để trả lời câu hỏi của người dùng một cách chính xác và đáng tin cậy.
 
 Ngữ cảnh pháp lý:
 {context}
@@ -34,8 +34,22 @@ Ngữ cảnh pháp lý:
 Câu hỏi:
 {question}
 
-QUY TẮC QUAN TRỌNG (BẮT BUỘC):
-1. Văn bản pháp luật có cấu trúc phân cấp:
+Yêu cầu trả lời:
+1. CHỈ sử dụng thông tin có trong "Ngữ cảnh pháp lý", không được tự ý thêm kiến thức bên ngoài.
+2. Nếu không tìm thấy thông tin phù hợp, hãy trả lời:
+   "Mình xin lỗi, thông tin này không nằm trong cơ sở dữ liệu của mình."
+3. Nếu có, hãy trích dẫn rõ:
+   - Điều
+   - Khoản
+   - Điểm (nếu có)
+4. Trình bày câu trả lời:
+   - Rõ ràng
+   - Dễ hiểu
+   - Ngắn gọn nhưng đầy đủ ý
+5. Nếu câu hỏi liên quan đến mức phạt, hãy nêu cụ thể:
+   - Hành vi vi phạm
+   - Mức phạt tương ứng
+6. 1. Văn bản pháp luật có cấu trúc phân cấp:
    - Điều → Khoản → Điểm (a, b, c…)
 2. Nếu một đoạn ghi:
    "Phạt tiền từ X đến Y đối với các hành vi sau:"
@@ -46,22 +60,6 @@ QUY TẮC QUAN TRỌNG (BẮT BUỘC):
    - Phải tìm ngược lên phần trước đó để lấy mức phạt tương ứng
    - KHÔNG được bỏ sót mức phạt chỉ vì nó không nằm cùng dòng
 
-YÊU CẦU TRẢ LỜI:
-1. CHỈ sử dụng thông tin trong ngữ cảnh.
-2. Nếu không tìm thấy thông tin:
-   → "Mình xin lỗi, thông tin này không nằm trong cơ sở dữ liệu của mình."
-3. Nếu có:
-   - Nêu rõ:
-     + Hành vi vi phạm
-     + Mức phạt (nếu tìm được)
-     + Điều / Khoản / Điểm
-4. Nếu có hành vi nhưng không thấy mức phạt rõ:
-   → ghi: "mức phạt không tìm thấy rõ trong dữ liệu"
-5. Trình bày rõ ràng, dễ hiểu, ngắn gọn.
-
-LƯU Ý:
-- Luôn ưu tiên ghép thông tin từ nhiều dòng liên quan (mức phạt + danh sách hành vi)
-- Không được trả lời thiếu mức phạt nếu nó tồn tại ở phần phía trên
 
 Trả lời:
 """
@@ -71,7 +69,7 @@ prompt = ChatPromptTemplate.from_template(prompt_template)
 # 🔥 LLM
 llm = ChatGoogleGenerativeAI(
     model="gemini-2.5-flash-lite",
-    temperature=0.1
+    temperature=0.2
 )
 
 def format_docs(docs):
