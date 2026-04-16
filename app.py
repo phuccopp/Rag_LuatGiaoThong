@@ -13,7 +13,7 @@ examples = [
 
 demo = gr.ChatInterface(
     fn=chat,
-    examples=examples,   # 👈 câu hỏi gợi ý
+    examples=examples,  
     title="🚦 Chatbot Luật Giao Thông Việt Nam",
     description="Hỏi về luật giao thông Việt Nam. Bấm vào câu hỏi mẫu hoặc nhập câu hỏi của bạn.",
 )
