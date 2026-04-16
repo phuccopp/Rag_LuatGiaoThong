@@ -49,7 +49,7 @@ Yêu cầu trả lời:
 5. Nếu câu hỏi liên quan đến mức phạt, hãy nêu cụ thể:
    - Hành vi vi phạm
    - Mức phạt tương ứng
-6. Nhớ lọc rõ hành vi được nêu trong context, nếu hành vi đó không vi phạm thì hãy trả lời không vi phạm + mức phạt nếu vi phạm
+6. Nhớ lọc rõ hành vi được nêu trong context, nếu hành vi đó không vi phạm thì hãy trả lời không vi phạm + mức phạt nếu vi phạm, riêng context nào liên quan đến nón hay mũ bảo hiểm hãy dò thật kĩ mức phạt
 Trả lời:
 """
 
