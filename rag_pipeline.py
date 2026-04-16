@@ -15,121 +15,57 @@ embedding = HuggingFaceEmbeddings(
 )
 
 # 🔥 load vector DB
-vectorstore = FAISS.load_local("vectorstore", embedding, allow_dangerous_deserialization=True)
+vectorstore = FAISS.load_local(
+    "vectorstore",
+    embedding,
+    allow_dangerous_deserialization=True
+)
 
-retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+retriever = vectorstore.as_retriever(search_kwargs={"k": 6})
 
-# 🔥 prompt
 prompt_template = """
-Bạn là AI chuyên về LUẬT GIAO THÔNG ĐƯỜNG BỘ VIỆT NAM.
-
-Nhiệm vụ:
-- Chỉ sử dụng thông tin trong CONTEXT.
-- KHÔNG được tự thêm kiến thức bên ngoài.
-- Nếu không có thông tin, trả lời: "Không có thông tin trong tài liệu."
-- Trả lời bằng tiếng Việt.
-- Nếu có nguồn, trích dẫn dạng (source: trang).
-
-----------------------------------------
-
-🧠 QUY TẮC HIỂU CÂU HỎI (RẤT QUAN TRỌNG):
-
-- Phải hiểu câu hỏi theo NGỮ NGHĨA, không chỉ khớp từ khóa.
-- Cho phép nhận diện các cách diễn đạt tương đương, ví dụ:
-  + "bằng lái xe" = "giấy phép lái xe"
-  + "nồng độ cồn" = "uống rượu bia"
-  + "chuyển làn sai" = "chuyển làn không đúng quy định"
-- Nếu câu hỏi dùng từ khác nhưng ý nghĩa trùng với nội dung trong CONTEXT → vẫn phải trả lời.
-
-⚠️ Tuy nhiên:
-- KHÔNG được trả lời nếu CONTEXT thực sự không chứa thông tin liên quan.
-
-----------------------------------------
-
-🔎 QUY TẮC TÌM THÔNG TIN:
-
-- Không cần khớp chính xác từng từ.
-- Hãy tìm đoạn trong CONTEXT có ý nghĩa GẦN NHẤT với câu hỏi.
-- Ưu tiên:
-  + cùng chủ đề
-  + cùng hành vi
-  + cùng đối tượng (người lái xe, phương tiện...)
-
-----------------------------------------
-
-🔴 1. Nếu câu hỏi liên quan đến XỬ PHẠT / VI PHẠM:
-
-- Trả lời theo dạng:
-
-👉 Mức phạt chính (tiêu đề)
-
-"Mức phạt từ X đến Y đồng áp dụng cho các hành vi sau:"
-- Hành vi 1
-- Hành vi 2
-- Hành vi 3
-
-- Nếu có nhiều mức phạt → chia thành nhiều nhóm
-- Nếu có hình phạt bổ sung (tước GPLX, trừ điểm, v.v.) → phải nêu rõ
-- Ưu tiên gom nhóm theo mức tiền
-
-----------------------------------------
-
-🟢 2. Nếu câu hỏi là KHÁI NIỆM / GIẢI THÍCH:
-
-- Trả lời chi tiết, có cấu trúc rõ ràng
-- Có thể chia:
-  + Định nghĩa
-  + Phân loại
-  + Giải thích
-
-Ví dụ:
-"Bằng lái xe (giấy phép lái xe) gồm các hạng sau:"
-- Hạng A1: ...
-- Hạng B1: ...
-- Hạng B2: ...
-
-----------------------------------------
-
-⚠️ LƯU Ý QUAN TRỌNG:
-
-- Nếu tìm thấy thông tin GẦN ĐÚNG → vẫn trả lời
-- Nếu KHÔNG tìm thấy thông tin LIÊN QUAN → trả:
-  "Không có thông tin trong tài liệu."
-- Không suy đoán
-- Không trả lời chung chung
-- Giữ nguyên thuật ngữ pháp lý
-
-----------------------------------------
-
-CONTEXT:
+Bạn là một trợ lý AI chuyên nghiệp về LUẬT GIAO THÔNG ĐƯỜNG BỘ VIỆT NAM.
+Nhiệm vụ của bạn là sử dụng NGỮ CẢNH PHÁP LÝ được cung cấp để trả lời câu hỏi của người dùng một cách chính xác và đáng tin cậy.
+Ngữ cảnh pháp lý:
 {context}
-
-QUESTION:
+Câu hỏi:
 {question}
-
-ANSWER:
+Yêu cầu trả lời:
+1. CHỈ sử dụng thông tin có trong "Ngữ cảnh pháp lý", không được tự ý thêm kiến thức bên ngoài.
+2. Nếu không tìm thấy thông tin phù hợp, hãy trả lời:
+   "Mình xin lỗi, thông tin này không nằm trong cơ sở dữ liệu của mình."
+3. Nếu có, hãy trích dẫn rõ:
+   - Điều
+   - Khoản
+   - Điểm (nếu có)
+4. Trình bày câu trả lời:
+   - Rõ ràng
+   - Dễ hiểu
+   - Ngắn gọn nhưng đầy đủ ý
+5. Nếu câu hỏi liên quan đến mức phạt, hãy nêu cụ thể:
+   - Hành vi vi phạm
+   - Mức phạt tương ứng
+6. Nhớ lọc rõ hành vi được nêu trong context, nếu hành vi đó không vi phạm thì hãy trả lời không vi phạm + mức phạt nếu vi phạm, riêng context nào liên quan đến nón hay mũ bảo hiểm hãy dò thật kĩ mức phạt
+Trả lời:
 """
+
 prompt = ChatPromptTemplate.from_template(prompt_template)
 
-# 🔥 LLM (đổi model nhanh hơn)
+# 🔥 LLM
 llm = ChatGoogleGenerativeAI(
-    model="gemini-3.1-flash-lite-preview",
+    model="gemini-2.5-flash-lite",
     temperature=0.1
 )
 
-import os
-
 def format_docs(docs):
     formatted = []
-    
+
     for doc in docs:
         source = doc.metadata.get("source", "")
         page = doc.metadata.get("page", "")
 
-        
         filename = os.path.basename(source)
 
-        
         if page != "":
             source_text = f"{filename}:{page}"
         else:
