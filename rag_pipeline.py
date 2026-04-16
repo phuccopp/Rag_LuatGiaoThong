@@ -49,17 +49,6 @@ Yêu cầu trả lời:
 5. Nếu câu hỏi liên quan đến mức phạt, hãy nêu cụ thể:
    - Hành vi vi phạm
    - Mức phạt tương ứng
-6. 1. Văn bản pháp luật có cấu trúc phân cấp:
-   - Điều → Khoản → Điểm (a, b, c…)
-2. Nếu một đoạn ghi:
-   "Phạt tiền từ X đến Y đối với các hành vi sau:"
-   và bên dưới là các điểm a, b, c...
-   → THÌ mức phạt X–Y ÁP DỤNG cho TẤT CẢ các hành vi a, b, c đó.
-3. Khi tìm mức phạt cho một hành vi:
-   - Nếu hành vi nằm ở điểm (a, b, c...)
-   - Phải tìm ngược lên phần trước đó để lấy mức phạt tương ứng
-   - KHÔNG được bỏ sót mức phạt chỉ vì nó không nằm cùng dòng
-
 
 Trả lời:
 """
