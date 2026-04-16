@@ -21,7 +21,7 @@ vectorstore = FAISS.load_local(
     allow_dangerous_deserialization=True
 )
 
-retriever = vectorstore.as_retriever(search_kwargs={"k": 6})
+retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
 
 prompt_template = """
 Bạn là một trợ lý AI chuyên nghiệp về LUẬT GIAO THÔNG ĐƯỜNG BỘ VIỆT NAM.
