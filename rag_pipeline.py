@@ -49,8 +49,6 @@ Yêu cầu trả lời:
 5. Nếu câu hỏi liên quan đến mức phạt, hãy nêu cụ thể:
    - Hành vi vi phạm
    - Mức phạt tương ứng
-6. Nhớ lọc rõ hành vi được nêu trong context, nếu hành vi đó không vi phạm thì hãy trả lời không vi phạm + mức phạt nếu vi phạm
-7. Với context có liên quan đến việc đội nón hay mũ bảo hiểm, nếu có vi phạm thì nói có vi phạm và nêu mức phạt có trong tài liệu, nếu không vi phạm thì nói không vi phạm và vẫn nêu mức phạt của lỗi không đội mũ bảo hiểm, bỏ qua các ngữ cảnh phụ, chỉ cần xác định có vi phạm hay không thôi rồi nêu ra
 Trả lời"
 """
 
