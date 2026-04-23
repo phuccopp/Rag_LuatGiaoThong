@@ -1,3 +1,6 @@
+---
+sdk: docker
+---
 # RAG Luật Giao Thông (Vietnam Traffic Law Chatbot)
 
 ##  Giới thiệu
