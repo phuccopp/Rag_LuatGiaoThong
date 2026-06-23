@@ -6,3 +6,6 @@ langchain_google_genai
 faiss-cpu
 sentence-transformers
 python-dotenv
+langchain-huggingface
+rank-bm25
+numpy

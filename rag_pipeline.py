@@ -1,28 +1,89 @@
 from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnablePassthrough
+from langchain_core.runnables import RunnablePassthrough, RunnableLambda
 from langchain_core.output_parsers import StrOutputParser
+
+from rank_bm25 import BM25Okapi
 from dotenv import load_dotenv
+import numpy as np
 import os
 
 load_dotenv()
 
-# embedding 
+
+# =========================
+# 1. EMBEDDING
+# =========================
 embedding = HuggingFaceEmbeddings(
     model_name="bkai-foundation-models/vietnamese-bi-encoder"
 )
 
-# load vector DB
+
+# =========================
+# 2. LOAD FAISS
+# =========================
 vectorstore = FAISS.load_local(
     "vectorstore",
     embedding,
     allow_dangerous_deserialization=True
 )
 
-retriever = vectorstore.as_retriever(search_kwargs={"k": 10})
+retriever = vectorstore.as_retriever(search_kwargs={"k": 30})
 
+
+# =========================
+# 3. BM25 INDEX (SPARSE SEARCH)
+# =========================
+all_docs = list(vectorstore.docstore._dict.values())
+
+corpus = [doc.page_content for doc in all_docs]
+tokenized_corpus = [doc.split() for doc in corpus]
+
+bm25 = BM25Okapi(tokenized_corpus)
+
+
+# =========================
+# 4. HYBRID SEARCH
+# =========================
+def hybrid_search(query, k=30):
+    # Dense (FAISS) - FIXED
+    dense_docs = retriever.invoke(query)
+
+    # Sparse (BM25)
+    scores = bm25.get_scores(query.split())
+    top_idx = np.argsort(scores)[::-1][:k]
+    sparse_docs = [all_docs[i] for i in top_idx]
+
+    # Merge + deduplicate
+    seen = set()
+    merged = []
+
+    for doc in dense_docs + sparse_docs:
+        key = doc.page_content
+        if key not in seen:
+            seen.add(key)
+            merged.append(doc)
+
+    return merged[:k]
+
+# wrap for LCEL
+retrieve_runnable = RunnableLambda(hybrid_search)
+
+
+# =========================
+# 5. FORMAT DOCS (NO SOURCE)
+# =========================
+def format_docs(docs):
+    return "\n\n".join(doc.page_content for doc in docs)
+
+format_runnable = RunnableLambda(format_docs)
+
+
+# =========================
+# 6. PROMPT (GIỮ NGUYÊN)
+# =========================
 prompt_template = """
 Bạn là trợ lý AI chuyên phân tích LUẬT GIAO THÔNG ĐƯỜNG BỘ VIỆT NAM.
 
@@ -35,65 +96,66 @@ Câu hỏi của người dùng:
 {question}
 
 Hướng dẫn xử lý:
+1. Phân tích câu hỏi và xác định **hành vi giao thông thực tế**.
 
-1. Phân tích câu hỏi và xác định **hành vi giao thông thực tế** của người dùng.
+2. Xác định **loại phương tiện** trong câu hỏi:
 
-2. Chuẩn hóa hành vi đó thành **thuật ngữ pháp lý tương đương** trong ngữ cảnh.
-Ví dụ:
-- "vượt đèn đỏ" → "không chấp hành hiệu lệnh của đèn tín hiệu giao thông"
-- "không đội nón bảo hiểm" → "không đội mũ bảo hiểm"
-- "lái xe sau khi uống rượu" → "điều khiển phương tiện có nồng độ cồn"
-- "chạy ngược chiều" → "đi ngược chiều của đường một chiều"
+- Nếu câu hỏi nêu rõ phương tiện (xe máy, ô tô, xe đạp điện...) → CHỈ dùng đúng phương tiện đó.
 
-3. Sau khi chuẩn hóa hành vi, tìm thông tin tương ứng trong **Ngữ cảnh pháp lý**.
+- Nếu KHÔNG nói rõ phương tiện:
+    + Nếu câu hỏi chỉ có 1 lỗi vi phạm → trả lời theo TẤT CẢ nhóm phương tiện liên quan (xe ô tô / xe mô tô / xe thô sơ nếu có trong luật).
+    + Nếu câu hỏi có NHIỀU lỗi vi phạm (lỗi chồng lỗi / nhiều hành vi) → mặc định CHỈ TRẢ LỜI VỀ xe mô tô / xe gắn máy.
 
-4. CHỈ sử dụng thông tin có trong "Ngữ cảnh pháp lý", không tự thêm kiến thức bên ngoài.
+- Không được tự ý mở rộng thêm nhóm phương tiện ngoài luật.
 
-5. Nếu không tìm thấy thông tin phù hợp trong ngữ cảnh, trả lời:
+3. Chuẩn hóa hành vi đó thành **thuật ngữ pháp lý tương đương** trong ngữ cảnh.
+
+
+4. Sau khi chuẩn hóa hành vi, tìm thông tin tương ứng trong **Ngữ cảnh pháp lý**.
+
+
+5. Nếu KHÔNG tìm thấy thông tin:
 "Mình xin lỗi, thông tin này không nằm trong cơ sở dữ liệu của mình."
 
-6. Nếu tìm thấy, hãy trả lời rõ:
-- Hành vi vi phạm
-- Mức phạt
-- Trích dẫn: Điều, Khoản, Điểm (nếu có)
+6. Cách trả lời cho phương tiện đã được xác định, cấu trúc:
 
-7. Trình bày câu trả lời:
-- Rõ ràng
-- Dễ hiểu
-- Ngắn gọn
+- Hành vi vi phạm
+- Mức phạt :
+- Trích dẫn điều khoản (nếu có)
+
+7. Trình bày:
+- rõ ràng
+- tách dòng
+- dễ đọc
+8. Nếu có nhiều lỗi vi phạm (lỗi chồng lỗi):
+- Thêm 1 dòng cuối:
+
+"Tổng mức phạt (ước tính): min - max"
+
+Quy tắc tổng:
+- Nếu cùng 1 loại phương tiện → cộng tổng min–max
 
 Trả lời:
 """
 
 prompt = ChatPromptTemplate.from_template(prompt_template)
 
-#  LLM
+
+# =========================
+# 7. LLM
+# =========================
 llm = ChatGoogleGenerativeAI(
     model="gemini-2.5-flash-lite",
     temperature=0.2
 )
 
-def format_docs(docs):
-    formatted = []
 
-    for doc in docs:
-        source = doc.metadata.get("source", "")
-        page = doc.metadata.get("page", "")
-
-        filename = os.path.basename(source)
-
-        if page != "":
-            source_text = f"{filename}:{page}"
-        else:
-            source_text = filename
-
-        formatted.append(f"{doc.page_content}\n(source: {source_text})")
-
-    return "\n\n".join(formatted)
-
+# =========================
+# 8. RAG CHAIN (HYBRID)
+# =========================
 rag_chain = (
     {
-        "context": retriever | format_docs,
+        "context": retrieve_runnable | format_runnable,
         "question": RunnablePassthrough()
     }
     | prompt
@@ -101,5 +163,9 @@ rag_chain = (
     | StrOutputParser()
 )
 
+
+# =========================
+# 9. ASK FUNCTION
+# =========================
 def ask(q):
     return rag_chain.invoke(q)
