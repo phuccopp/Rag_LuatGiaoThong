@@ -47,26 +47,34 @@ bm25 = BM25Okapi(tokenized_corpus)
 # =========================
 # 4. HYBRID SEARCH
 # =========================
-def hybrid_search(query, k=30):
-    # Dense (FAISS) - FIXED
+def hybrid_search(query, k=15, rrf_k=60):
+    # 1. Dense (FAISS) - lấy top 30 ứng viên
     dense_docs = retriever.invoke(query)
 
-    # Sparse (BM25)
-    scores = bm25.get_scores(query.split())
-    top_idx = np.argsort(scores)[::-1][:k]
+    # 2. Sparse (BM25) - lấy top 30 ứng viên
+    scores = bm25.get_scores(query.lower().split()) # Nên thêm .lower() cho tiếng Việt
+    top_idx = np.argsort(scores)[::-1][:30]
     sparse_docs = [all_docs[i] for i in top_idx]
 
-    # Merge + deduplicate
-    seen = set()
-    merged = []
+    # 3. Tính điểm RRF (Reciprocal Rank Fusion)
+    rrf_scores = {}
+    doc_map = {}
 
-    for doc in dense_docs + sparse_docs:
-        key = doc.page_content
-        if key not in seen:
-            seen.add(key)
-            merged.append(doc)
+    # Chấm điểm theo thứ hạng từ FAISS
+    for rank, doc in enumerate(dense_docs):
+        content = doc.page_content
+        doc_map[content] = doc
+        rrf_scores[content] = rrf_scores.get(content, 0) + 1 / (rrf_k + rank + 1)
 
-    return merged[:k]
+    # Cộng dồn điểm theo thứ hạng từ BM25
+    for rank, doc in enumerate(sparse_docs):
+        content = doc.page_content
+        doc_map[content] = doc
+        rrf_scores[content] = rrf_scores.get(content, 0) + 1 / (rrf_k + rank + 1)
+
+    # 4. Sắp xếp từ cao xuống thấp theo điểm RRF và lấy top k tốt nhất
+    sorted_contents = sorted(rrf_scores.keys(), key=lambda x: rrf_scores[x], reverse=True)
+    return [doc_map[content] for content in sorted_contents[:k]]
 
 # wrap for LCEL
 retrieve_runnable = RunnableLambda(hybrid_search)
