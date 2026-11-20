@@ -208,7 +208,6 @@ Căn cứ pháp lý:
 
 - Chất lượng phụ thuộc vào dữ liệu đầu vào và cách chunking
 - Có thể bỏ sót một số điều khoản nếu retrieval chưa lấy đủ context
-- Chưa sử dụng reranking nâng cao
 - Chưa hỗ trợ hội thoại nhiều lượt
 
 ---
